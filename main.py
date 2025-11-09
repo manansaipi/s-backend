@@ -1,9 +1,7 @@
 from fastapi import FastAPI
-from core.database import engine, Base
+from core.database import init_db
 from routers import favoritesRoute as favorites_router
-
-# create the database tables on starttup (if they don't already exist)
-Base.metadata.create_all(bind=engine)
+from core.config import setup_cors
 
 app = FastAPI(
     title="S-API",
@@ -11,6 +9,8 @@ app = FastAPI(
     description="Backend service for managing user movie favorites."
 )
 
+setup_cors(app)
+init_db() 
 
 @app.get('/')
 def index():
