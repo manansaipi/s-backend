@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from core.database import init_db
-from routers import favoritesRoute as favorites_router
+from routers import favoritesRoute, authRoute
 from core.config import setup_cors
 
 app = FastAPI(
@@ -14,7 +14,7 @@ init_db()
 
 @app.get('/')
 def index():
-    a=0
     return "Movie Favorites API is running! Check /docs for endpoints."
 
-app.include_router(favorites_router.router)
+app.include_router(authRoute.router)
+app.include_router(favoritesRoute.router)
