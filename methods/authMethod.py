@@ -3,14 +3,14 @@ from models import userModels
 from schemas import userSchema
 from fastapi import HTTPException, status, Depends
 from utils.security import Hasher, AccessToken
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from core.config import SECRET_KEY
 from sqlalchemy.orm import Session
 from core.database import get_db
 from jose import jwt, JWTError
 
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+bearer_scheme = HTTPBearer()
 
 def authenticate_user_and_get_token(db: Session, user: userSchema.UserAuth):
     user_in_db = db.query(userModels.User).filter(userModels.User.user_name == user.user_name).first()
@@ -30,7 +30,7 @@ def register_user_to_db(db: Session, user: userSchema.UserAuth):
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User name already registered"
+            detail="User name already registered",
         )
     
     hashed_password = Hasher.get_password_hash(user.password)
@@ -44,8 +44,11 @@ def register_user_to_db(db: Session, user: userSchema.UserAuth):
     db.refresh(db_user)
     return db_user
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(bearer_scheme), db: Session = Depends(get_db)):
         """Decodes the JWT and retrieves the user from the database."""
+        # extract the raw token strring from the credentials object
+        token = credentials.credentials
+
         try:
             payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
             user_name: str = payload.get("sub") 
