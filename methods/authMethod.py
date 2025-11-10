@@ -2,10 +2,25 @@ from sqlalchemy.orm import Session
 from models import userModels
 from schemas import userSchema
 from fastapi import HTTPException, status
-from utils import security
+from utils.security import Hasher, AccessToken
+from fastapi.security import OAuth2PasswordBearer
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-def register_user_to_db(db: Session, user: userSchema.UserCreate):
+def authenticate_user_and_get_token(db: Session, user: userSchema.UserAuth):
+    user_in_db = db.query(userModels.User).filter(userModels.User.user_name == user.user_name).first()
+
+    if not user or not Hasher.verify_password(user.password, user_in_db.hashed_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect user name or password",
+        )
+
+    access_token = AccessToken.create_access_token({"sub": user.user_name})
+
+    return {"access_token": access_token, "token_type": "bearer"}
+
+def register_user_to_db(db: Session, user: userSchema.UserAuth):
     db_user = db.query(userModels.User).filter(userModels.User.user_name == user.user_name).first()
     if db_user:
         raise HTTPException(
@@ -13,7 +28,7 @@ def register_user_to_db(db: Session, user: userSchema.UserCreate):
             detail="User name already registered"
         )
     
-    hashed_password = security.Hasher.get_password_hash(user.password)
+    hashed_password = Hasher.get_password_hash(user.password)
 
     db_user = userModels.User(
         user_name=user.user_name, 

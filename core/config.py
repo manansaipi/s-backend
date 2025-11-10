@@ -1,11 +1,12 @@
+import os
 from fastapi.middleware.cors import CORSMiddleware
 
-# Allowed origins for frontend apps (adjust for production)
 ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # React dev server
+    "http://localhost:5173",  
     "http://127.0.0.1:5173",
-    # Add your deployed frontend URL here later
 ]
+
+SECRET_KEY = os.getenv("SECRET_KEY", "A_VERY_LONG_AND_RANDOM_STRING_FOR_JWT_SIGNING!") 
 
 def setup_cors(app):
     """Attach CORS middleware to FastAPI app."""
