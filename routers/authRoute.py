@@ -3,7 +3,6 @@ from sqlalchemy.orm import Session
 from schemas import userSchema
 from methods import authMethod
 from core.database import get_db
-from fastapi import APIRouter, Depends, status
 
 # Create an APIRouter instance
 router = APIRouter(

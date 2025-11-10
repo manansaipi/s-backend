@@ -1,9 +1,14 @@
 from sqlalchemy.orm import Session
 from models import userModels
 from schemas import userSchema
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, Depends
 from utils.security import Hasher, AccessToken
 from fastapi.security import OAuth2PasswordBearer
+from core.config import SECRET_KEY
+from sqlalchemy.orm import Session
+from core.database import get_db
+from jose import jwt, JWTError
+
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
@@ -38,3 +43,27 @@ def register_user_to_db(db: Session, user: userSchema.UserAuth):
     db.commit()
     db.refresh(db_user)
     return db_user
+
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+        """Decodes the JWT and retrieves the user from the database."""
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=["HS256"])
+            user_name: str = payload.get("sub") 
+            if user_name is None:
+                raise JWTError
+
+        except JWTError:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+
+        user = db.query(userModels.User).filter(userModels.User.user_name == user_name).first() 
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+        
+        return user

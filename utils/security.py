@@ -2,7 +2,6 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta
 from jose import jwt
 from core.config import SECRET_KEY
-
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class Hasher:
@@ -29,3 +28,5 @@ class AccessToken:
         encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm="HS256")
 
         return encoded_jwt
+    
+   
