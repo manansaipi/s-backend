@@ -7,3 +7,6 @@ class UserAuth(BaseModel):
 class UserInDB(BaseModel):
     id: int
     user_name: str
+
+    class Config:
+        orm_mode = True
